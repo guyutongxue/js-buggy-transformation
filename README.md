@@ -33,8 +33,8 @@ The outer parentheses around `` foo()`bar` ``and `baz()?.qux` are semantically r
 | bun              | ^1.3.14 | ❌FAIL [^1] |
 | terser           | ^5.48.0 | ❌FAIL [^2] |
 
-- [^1]: Strips required parentheses in both tagged-template and optional-chaining cases.
-- [^2]: Strips required parentheses in the tagged-template case only.
+[^1]: Strips required parentheses in both tagged-template and optional-chaining cases.  
+[^2]: Strips required parentheses in the tagged-template case only.
 
 ## Usage
 
