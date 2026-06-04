@@ -96,7 +96,7 @@ function readOutput(path) {
 // ─── 3. tsc ───
 {
   const label = 'typescript (tsc)';
-  const r = run('npx tsc --outDir dist/tsc --target ES2022 --module ESNext --moduleResolution bundler src/input.ts');
+  const r = run('npx tsc --outDir dist/tsc');
   if (r.error) {
     results.push({ tool: label, error: r.error });
   } else {
@@ -173,7 +173,7 @@ function readOutput(path) {
   try {
     const { transform: oxcTransform } = await import('oxc-transform');
     const code = readFileSync(resolve(ROOT, 'src/input.ts'), 'utf8');
-    const result = oxcTransform(resolve(ROOT, 'src/input.ts'), code, {
+    const result = await oxcTransform(resolve(ROOT, 'src/input.ts'), code, {
       target: 'es2022',
     });
     const chk = checkParens(result.code);

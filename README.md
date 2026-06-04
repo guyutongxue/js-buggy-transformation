@@ -23,17 +23,18 @@ The outer parentheses around `` foo()`bar` ``and `baz()?.qux` are semantically r
 
 | Tool             | Version | Result      |
 | ---------------- | ------- | ----------- |
-| prettier         | ^3.5.0  | ✅PASS      |
-| esbuild          | ^0.25.0 | ❌FAIL [^1] |
-| typescript (tsc) | ^5.8.0  | ✅PASS      |
-| babel            | ^7.27.0 | ❌FAIL [^1] |
-| webpack          | ^5.98.0 | ✅PASS      |
-| swc              | ^1.11.0 | ❌FAIL [^2] |
-| oxc-transform    | ^0.53.0 | ❌FAIL [^2] |
-| bun              | ^1.3.14 | ❌FAIL [^1] |
-| terser           | ^5.48.0 | ❌FAIL [^2] |
+| prettier         | 3.8.3   | ✅PASS      |
+| esbuild          | 0.28.0  | ❌FAIL [^1] |
+| typescript (tsc) | 6.0.3   | ✅PASS      |
+| babel            | 7.29.7  | ❌FAIL [^1] |
+| webpack          | 5.107.2 | ✅PASS      |
+| swc              | 1.15.40 | ❌FAIL [^2] |
+| oxc-transform    | 0.134.0 | ❌FAIL [^2] |
+| bun              | 1.3.14  | ❌FAIL [^1] |
+| terser           | 5.48.0  | ❌FAIL [^2] |
 
-[^1]: Strips required parentheses in both tagged-template and optional-chaining cases.  
+[^1]: Strips required parentheses in both tagged-template and optional-chaining cases.
+
 [^2]: Strips required parentheses in the tagged-template case only.
 
 ## Usage
