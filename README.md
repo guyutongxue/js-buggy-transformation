@@ -1,6 +1,6 @@
 # buggy-transformation
 
-A regression test harness comparing how 9 JavaScript/TypeScript tools handle `new` expressions combined with tagged template literals and optional chaining — two edge cases where incorrect parentheses stripping changes program semantics.
+A regression test harness comparing how 10 JavaScript/TypeScript tools handle `new` expressions combined with tagged template literals and optional chaining — two edge cases where incorrect parentheses stripping changes program semantics.
 
 ## The Problem
 
@@ -32,6 +32,7 @@ The outer parentheses around `` foo()`bar` ``and `baz()?.qux` are semantically r
 | oxc-transform    | 0.134.0 | ❌FAIL [^2] |
 | bun              | 1.3.14  | ❌FAIL [^1] |
 | terser           | 5.48.0  | ❌FAIL [^2] |
+| svelte/compiler  | 5.56.1  | ❌FAIL [^1] |
 
 [^1]: Strips required parentheses in both tagged-template and optional-chaining cases.
 
