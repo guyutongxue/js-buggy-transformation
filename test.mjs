@@ -14,19 +14,24 @@ const results = [];
  * Detect whether parentheses around `new` callee were stripped.
  *
  * Case 1 (tagged template):
- *   Correct: new (foo()`bar`)()    — `(` right after `new`
- *   Buggy:   new foo()`bar`()     — identifier right after `new`
+ *   Correct:  new (foo()`bar`)()    — `(` right after `new`, template inside parens
+ *   Buggy A:  new foo()`bar`()      — identifier right after `new`
+ *   Buggy B:  new (foo())`bar`()    — parens close before the template literal
  *
  * Case 2 (optional chaining):
- *   Correct: new (baz()?.qux)()   — `(` right after `new`, `?.` inside outer parens
- *   Buggy A: new baz()?.qux()     — identifier right after `new`
- *   Buggy B: new (baz())?.qux     — parens close before `?.`
+ *   Correct:  new (baz()?.qux)()    — `(` right after `new`, `?.` inside outer parens
+ *   Buggy A:  new baz()?.qux()      — identifier right after `new`
+ *   Buggy B:  new (baz())?.qux      — parens close before `?.`
  */
 function checkParens(code) {
   const buggy = [];
 
-  // Case 1: buggy if `new` is followed by `foo(` (not `(` first)
-  if (/new\s+foo\s*\(/.test(code)) {
+  // Case 1: buggy if `new` is followed by `foo(` (no outer paren),
+  //         or if parens close before the tagged template: `new (foo())`...`
+  if (
+    /new\s+foo\s*\(/.test(code) ||
+    /new\s*\(\s*foo\s*\([^)]*\)\s*\)\s*`/.test(code)
+  ) {
     buggy.push("tagged-template");
   }
 
@@ -250,19 +255,109 @@ function readOutput(path) {
 }
 
 // --- 10. svelte/compiler ---
+// underlying uses acorn + esrap, skip
+// {
+//   const label = "svelte/compiler";
+//   const outFile = "dist/svelte/output.js";
+//   mkdirSync(resolve(ROOT, "dist/svelte"), { recursive: true });
+//   try {
+//     const { compileModule } = await import("svelte/compiler");
+//     const source = readFileSync(resolve(ROOT, "src/input.js"), "utf8");
+//     const result = compileModule(source, {});
+//     const code = result.js.code;
+//     const chk = checkParens(code);
+//     results.push({ tool: label, ...chk, output_snippet: code.trim() });
+//     // Also write to file for inspection
+//     writeFileSync(resolve(ROOT, outFile), code);
+//   } catch (e) {
+//     results.push({ tool: label, error: e.message });
+//   }
+// }
+
+// ─── 11. acorn + escodegen ───
 {
-  const label = "svelte/compiler";
-  const outFile = "dist/svelte/output.js";
-  mkdirSync(resolve(ROOT, "dist/svelte"), { recursive: true });
+  const label = "acorn + escodegen";
   try {
-    const { compileModule } = await import("svelte/compiler");
-    const source = readFileSync(resolve(ROOT, "src/input.js"), "utf8");
-    const result = compileModule(source, {});
-    const code = result.js.code;
-    const chk = checkParens(code);
-    results.push({ tool: label, ...chk, output_snippet: code.trim() });
-    // Also write to file for inspection
-    writeFileSync(resolve(ROOT, outFile), code);
+    const { parse } = await import("acorn");
+    const { generate } = await import("escodegen");
+    const code = readFileSync(resolve(ROOT, "src/input.js"), "utf8");
+    const ast = parse(code, { ecmaVersion: 2022, sourceType: "module" });
+    const out = generate(ast);
+    const chk = checkParens(out);
+    results.push({ tool: label, ...chk, output_snippet: out.trim() });
+  } catch (e) {
+    results.push({ tool: label, error: e.message });
+  }
+}
+
+// ─── 12. acorn + astring ───
+{
+  const label = "acorn + astring";
+  try {
+    const { parse } = await import("acorn");
+    const { generate } = await import("astring");
+    const code = readFileSync(resolve(ROOT, "src/input.js"), "utf8");
+    const ast = parse(code, { ecmaVersion: 2022, sourceType: "module" });
+    const out = generate(ast);
+    const chk = checkParens(out);
+    results.push({ tool: label, ...chk, output_snippet: out.trim() });
+  } catch (e) {
+    results.push({ tool: label, error: e.message });
+  }
+}
+
+// ─── 13. acorn + esrap ───
+{
+  const label = "acorn + esrap";
+  try {
+    const { parse } = await import("acorn");
+    const { print } = await import("esrap");
+    const { default: tsPrinter } = await import("esrap/languages/ts");
+    const code = readFileSync(resolve(ROOT, "src/input.js"), "utf8");
+    const ast = parse(code, { ecmaVersion: 2022, sourceType: "module" });
+    const out = print(ast, tsPrinter());
+    const chk = checkParens(out.code);
+    results.push({ tool: label, ...chk, output_snippet: out.code.trim() });
+  } catch (e) {
+    results.push({ tool: label, error: e.message });
+  }
+}
+
+// ─── 14. recast ───
+{
+  const label = "recast";
+  try {
+    const { default: recast } = await import("recast");
+    const b = recast.types.builders;
+    const ast = b.program([
+      b.expressionStatement(
+        b.newExpression(
+          b.taggedTemplateExpression(
+            b.callExpression(b.identifier("foo"), []),
+            b.templateLiteral(
+              [b.templateElement({ raw: "bar", cooked: "bar" }, true)],
+              [],
+            ),
+          ),
+          [],
+        ),
+      ),
+      b.expressionStatement(
+        b.newExpression(
+          b.chainExpression(
+            b.memberExpression.from({
+              object: b.callExpression(b.identifier("baz"), []),
+              property: b.identifier("qux"),
+              optional: true,
+            }),
+          ),
+          [],
+        ),
+      ),
+    ]);
+    const out = recast.prettyPrint(ast);
+    const chk = checkParens(out.code);
+    results.push({ tool: label, ...chk, output_snippet: out.code.trim() });
   } catch (e) {
     results.push({ tool: label, error: e.message });
   }
