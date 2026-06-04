@@ -14,10 +14,10 @@ export const TestB = new (baz()?.qux)();
 
 The outer parentheses around `` foo()`bar` ``and `baz()?.qux` are semantically required. Without them, `new` binds differently:
 
-| Input                | Correct              | Buggy (wrong semantics)                    |
-| -------------------- | -------------------- | ------------------------------------------ |
-| `new (foo()`bar`)()` | `new (foo()`bar`)()` | `new foo()`bar`()`                         |
-| `new (baz()?.qux)()` | `new (baz()?.qux)()` | `new (baz())?.qux()` or `new baz()?.qux()` |
+| Input                  | Correct                | Buggy (wrong semantics)                    |
+| ---------------------- | ---------------------- | ------------------------------------------ |
+| ``new (foo()`bar`)()`` | ``new (foo()`bar`)()`` | ``new foo()`bar`()``                       |
+| `new (baz()?.qux)()`   | `new (baz()?.qux)()`   | `new (baz())?.qux()` or `new baz()?.qux()` |
 
 ## Tested Tools
 
